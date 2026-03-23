@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firm Intelligence Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10; --surface: #111318; --surface2: #181c24; --border: #1e2530;
+    --accent: #c8a96e; --accent2: #4a9eff; --text: #e8eaf0; --text-muted: #6b7280;
+    --tag-ns: #1a3a2a; --tag-ns-c: #4ade80; --tag-def: #1a2a3a; --tag-def-c: #60a5fa;
+    --tag-cyber: #2a1a3a; --tag-cyber-c: #c084fc; --tag-hs: #3a2a1a; --tag-hs-c: #fb923c;
+    --tag-ai: #1a3a3a; --tag-ai-c: #2dd4bf; --tag-trade: #3a3a1a; --tag-trade-c: #facc15;
+    --tag-tech: #2a1a1a; --tag-tech-c: #f87171;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif; min-height: 100vh; font-size: 14px; }
+
+header { border-bottom: 1px solid var(–border); padding: 16px 28px; display: flex; align-items: center; gap: 16px; background: var(–surface); position: sticky; top: 0; z-index: 100; }
+header h1 { font-family: ‘Playfair Display’, serif; font-size: 20px; font-weight: 900; color: var(–accent); }
+header span { font-family: ‘IBM Plex Mono’, monospace; font-size: 11px; color: var(–text-muted); letter-spacing: 1px; text-transform: uppercase; }
+.header-right { margin-left: auto; }
+.export-btn { padding: 6px 14px; background: transparent; border: 1px solid var(–accent); color: var(–accent); font-family: ‘IBM Plex Mono’, monospace; font-size: 11px; border-radius: 4px; cursor: pointer; letter-spacing: 0.5px; transition: all 0.15s; }
+.export-btn:hover { background: var(–accent); color: #000; }
+
+.toolbar { padding: 10px 28px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid var(–border); background: var(–surface); position: sticky; top: 55px; z-index: 99; }
+.toolbar label { font-size: 11px; color: var(–text-muted); font-family: ‘IBM Plex Mono’, monospace; text-transform: uppercase; letter-spacing: 1px; }
+.filter-btn { padding: 4px 10px; border-radius: 4px; border: 1px solid var(–border); background: transparent; color: var(–text-muted); font-family: ‘IBM Plex Mono’, monospace; font-size: 11px; cursor: pointer; transition: all 0.15s; }
+.filter-btn:hover { border-color: var(–accent); color: var(–accent); }
+.filter-btn.active { background: var(–accent); color: #000; border-color: var(–accent); font-weight: 600; }
+.sort-select, .type-select { padding: 4px 8px; background: var(–surface2); border: 1px solid var(–border); color: var(–text); font-family: ‘IBM Plex Mono’, monospace; font-size: 11px; border-radius: 4px; cursor: pointer; }
+.sort-select { margin-left: auto; }
+
+.cities { display: grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - 112px); }
+.city-col { padding: 18px 24px; border-right: 1px solid var(–border); }
+.city-col:last-child { border-right: none; }
+.city-header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 2px solid var(–border); }
+.city-name { font-family: ‘Playfair Display’, serif; font-size: 17px; font-weight: 700; }
+.city-count { font-family: ‘IBM Plex Mono’, monospace; font-size: 11px; color: var(–text-muted); }
+.anchor-count { font-family: ‘IBM Plex Mono’, monospace; font-size: 11px; color: var(–accent); }
+
+.firm-card { background: var(–surface); border: 1px solid var(–border); border-radius: 6px; padding: 12px 14px; margin-bottom: 7px; transition: border-color 0.15s; animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.firm-card:hover { border-color: #2d3748; }
+.firm-card.anchor { border-color: rgba(200,169,110,0.5); background: linear-gradient(135deg, #111318, #13110d); }
+
+.firm-top { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 5px; }
+.firm-name { font-family: ‘Playfair Display’, serif; font-size: 14px; font-weight: 700; line-height: 1.3; }
+.anchor-star { color: var(–accent); margin-right: 3px; }
+.firm-meta { font-family: ‘IBM Plex Mono’, monospace; font-size: 9px; color: var(–text-muted); letter-spacing: 0.8px; text-transform: uppercase; margin-top: 2px; }
+.firm-revenue { font-family: ‘IBM Plex Mono’, monospace; font-size: 12px; font-weight: 500; color: var(–accent); white-space: nowrap; text-align: right; }
+.firm-revenue small { display: block; font-size: 9px; color: var(–text-muted); font-weight: 400; }
+.firm-desc { font-size: 12px; color: var(–text-muted); line-height: 1.5; margin-bottom: 7px; }
+
+.contacts-label { font-family: ‘IBM Plex Mono’, monospace; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(–accent2); margin-bottom: 4px; }
+.contact-item { font-size: 11px; color: #a0aec0; margin-bottom: 2px; line-height: 1.4; }
+.contact-item strong { color: var(–text); font-weight: 600; }
+.contact-item em { color: var(–text-muted); font-style: normal; font-size: 10px; }
+
+.firm-tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 7px 0; }
+.tag { padding: 2px 7px; border-radius: 3px; font-family: ‘IBM Plex Mono’, monospace; font-size: 10px; font-weight: 500; }
+.tag-ns { background: var(–tag-ns); color: var(–tag-ns-c); }
+.tag-def { background: var(–tag-def); color: var(–tag-def-c); }
+.tag-cyber { background: var(–tag-cyber); color: var(–tag-cyber-c); }
+.tag-hs { background: var(–tag-hs); color: var(–tag-hs-c); }
+.tag-ai { background: var(–tag-ai); color: var(–tag-ai-c); }
+.tag-trade { background: var(–tag-trade); color: var(–tag-trade-c); }
+.tag-tech { background: var(–tag-tech); color: var(–tag-tech-c); }
+
+.firm-actions { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+.btn-small { padding: 3px 8px; border-radius: 3px; border: 1px solid var(–border); background: transparent; color: var(–text-muted); font-family: ‘IBM Plex Mono’, monospace; font-size: 10px; cursor: pointer; transition: all 0.15s; }
+.btn-small:hover { border-color: var(–accent); color: var(–accent); }
+.firm-card.anchor .btn-anchor { border-color: var(–accent); color: var(–accent); }
+.has-notes-badge { font-family: ‘IBM Plex Mono’, monospace; font-size: 10px; color: var(–accent2); }
+
+.notes-area { margin-top: 8px; width: 100%; background: var(–surface2); border: 1px solid var(–border); border-radius: 4px; color: var(–text); font-family: ‘IBM Plex Sans’, sans-serif; font-size: 12px; padding: 8px; resize: vertical; min-height: 56px; line-height: 1.5; outline: none; transition: border-color 0.15s; }
+.notes-area:focus { border-color: var(–accent2); }
+.notes-area::placeholder { color: var(–text-muted); }
+
+.no-results { font-family: ‘IBM Plex Mono’, monospace; font-size: 12px; color: var(–text-muted); text-align: center; padding: 40px 0; }
+
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(–surface); border: 1px solid var(–border); border-radius: 8px; padding: 26px 28px; max-width: 660px; width: 90%; max-height: 80vh; overflow-y: auto; }
+.modal h2 { font-family: ‘Playfair Display’, serif; font-size: 18px; color: var(–accent); margin-bottom: 6px; }
+.modal p { font-size: 12px; color: var(–text-muted); margin-bottom: 14px; }
+.modal pre { background: var(–bg); border: 1px solid var(–border); border-radius: 4px; padding: 12px; font-family: ‘IBM Plex Mono’, monospace; font-size: 10px; color: var(–text); white-space: pre-wrap; word-break: break-word; margin-bottom: 14px; max-height: 38vh; overflow-y: auto; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.modal-btn { padding: 7px 14px; border-radius: 4px; cursor: pointer; font-family: ‘IBM Plex Mono’, monospace; font-size: 11px; border: 1px solid var(–border); background: transparent; color: var(–text-muted); transition: all 0.15s; }
+.modal-btn.primary { border-color: var(–accent); color: var(–accent); }
+.modal-btn:hover { background: var(–surface2); }
+.modal-btn.primary:hover { background: var(–accent); color: #000; }
+
+@media (max-width: 900px) { .cities { grid-template-columns: 1fr; } .city-col { border-right: none; border-bottom: 1px solid var(–border); } }
+</style>
+
+</head>
+<body>
+
+<header>
+  <h1>Firm Intelligence</h1>
+  <span>BD Pipeline · DC &amp; New York</span>
+  <div class="header-right">
+    <button class="export-btn" onclick="openExport()">⬇ Export Anchor List</button>
+  </div>
+</header>
+
+<div class="toolbar">
+  <label>Practice:</label>
+  <button class="filter-btn active" data-filter="all">All</button>
+  <button class="filter-btn" data-filter="ns">Nat'l Security</button>
+  <button class="filter-btn" data-filter="def">Defense</button>
+  <button class="filter-btn" data-filter="cyber">Cybersecurity</button>
+  <button class="filter-btn" data-filter="hs">Homeland Sec</button>
+  <button class="filter-btn" data-filter="ai">AI</button>
+  <button class="filter-btn" data-filter="trade">Trade</button>
+  <button class="filter-btn" data-filter="tech">Technology</button>
+  <label style="margin-left:8px">Type:</label>
+  <select class="type-select" id="typeSelect">
+    <option value="all">All Types</option>
+    <option value="Law Firm">Law Firms</option>
+    <option value="Lobbying">Lobbying</option>
+    <option value="Consulting">Consulting</option>
+  </select>
+  <select class="sort-select" id="sortSelect">
+    <option value="name">Sort: Name A–Z</option>
+    <option value="revenue">Sort: Revenue ↓</option>
+    <option value="type">Sort: Type</option>
+    <option value="anchor">Sort: Anchors First</option>
+  </select>
+</div>
+
+<div class="cities">
+  <div class="city-col">
+    <div class="city-header">
+      <span class="city-name">Washington, D.C.</span>
+      <span class="city-count" id="dc-count"></span>
+      <span class="anchor-count" id="dc-anchor-count"></span>
+    </div>
+    <div id="dc-firms"></div>
+  </div>
+  <div class="city-col">
+    <div class="city-header">
+      <span class="city-name">New York</span>
+      <span class="city-count" id="ny-count"></span>
+      <span class="anchor-count" id="ny-anchor-count"></span>
+    </div>
+    <div id="ny-firms"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="exportModal">
+  <div class="modal">
+    <h2>Anchor Client Pipeline</h2>
+    <p>Your marked anchor firms — copy or download as CSV to import into CRM or Excel.</p>
+    <pre id="exportContent"></pre>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeExport()">Close</button>
+      <button class="modal-btn primary" onclick="copyExport()">Copy to Clipboard</button>
+      <button class="modal-btn primary" onclick="downloadExport()">Download CSV</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TAG_LABELS = { ns:"Nat'l Security", def:'Defense', cyber:'Cybersecurity', hs:'Homeland Sec', ai:'AI', trade:'Trade', tech:'Technology' };
+
+const FIRMS = [
+  // DC
+  { city:'dc', name:'Booz Allen Hamilton', type:'Consulting', revenue:'$9.9B', revNum:9900, tags:['ns','def','cyber','hs','ai','tech'], desc:'Premier national security and defense consulting firm. Largest private employer of cleared personnel in the U.S. Heavy IC and DOD programs across AI, cyber, and analytics.', contacts:[{name:'Horacio Rozanski',title:'President & CEO'},{name:'Susan Penfield',title:'Chief Technology Officer'},{name:'Brad Medairy',title:'EVP, Cyber & Digital Solutions'}] },
+  { city:'dc', name:'Leidos', type:'Consulting', revenue:'$14.4B', revNum:14400, tags:['ns','def','cyber','hs','ai','tech'], desc:'Defense, intelligence, and civil market technology solutions. Major DOD, DHS, and IC programs. Growing AI and mission-critical systems footprint.', contacts:[{name:'Tom Bell',title:'President & CEO'},{name:'Chris Cage',title:'EVP & CFO'},{name:'Roy Stevens',title:'EVP, Defense Systems'}] },
+  { city:'dc', name:'SAIC', type:'Consulting', revenue:'$7.4B', revNum:7400, tags:['ns','def','cyber','ai','tech'], desc:'Technology integrator for defense and intelligence community. AI, cloud, and cyber solutions across Army, Navy, and Air Force programs.', contacts:[{name:'Nazzic Keene',title:'CEO'},{name:'Charles Mathis',title:'CFO'},{name:'Justin Reese',title:'EVP, National Security Sector'}] },
+  { city:'dc', name:'CACI International', type:'Consulting', revenue:'$6.7B', revNum:6700, tags:['ns','def','cyber','ai','tech'], desc:'National security IT and analytics. Expertise in intelligence solutions, ISR, and mission support. Full-spectrum cyber capabilities.', contacts:[{name:'John Mengucci',title:'President & CEO'},{name:'Tom Mutryn',title:'CFO'},{name:'Greg Bradford',title:'EVP, Integrated Solutions'}] },
+  { city:'dc', name:'Deloitte Government & Public Services', type:'Consulting', revenue:'$10B+', revNum:10000, tags:['def','cyber','hs','ai','tech','trade'], desc:'Largest government consulting practice in the U.S. Significant DHS, DOD, and IC engagements across cybersecurity, AI, and enterprise transformation.', contacts:[{name:'David Doyle',title:'Managing Principal, GPS'},{name:'Deborah Golden',title:'US Cyber & Strategic Risk Leader'},{name:'Bill Briggs',title:'Global CTO'}] },
+  { city:'dc', name:'Akin Gump Strauss Hauer & Feld', type:'Law & Lobbying', revenue:'$1.1B', revNum:1100, tags:['ns','def','trade','hs','tech'], desc:"#1 lobbying firm by revenue. Exceptional defense, intelligence, and national security practice. Deep revolving-door talent network across DOD, State, and IC.", contacts:[{name:'Kim Koopersmith',title:'Chairperson'},{name:'Bob Holleyman',title:'Partner, Trade & Gov\'t Affairs'},{name:'Michael Stramaglia',title:'Senior Advisor, National Security'}] },
+  { city:'dc', name:'Covington & Burling', type:'Law Firm', revenue:'$1.1B', revNum:1100, tags:['ns','def','cyber','trade','tech','ai'], desc:'Elite regulatory law firm with deep national security and defense practices. Go-to counsel for CFIUS, export controls, and cybersecurity regulation.', contacts:[{name:'Philip Urofsky',title:'Partner, Investigations & White Collar'},{name:'Susan Cassidy',title:'Partner, National Security & Cyber'},{name:'Kurt Wimmer',title:'Partner, Tech & Privacy'}] },
+  { city:'dc', name:'Hogan Lovells', type:'Law Firm', revenue:'$2.6B', revNum:2600, tags:['ns','def','trade','tech','hs'], desc:'Global firm with dominant DC government affairs practice. Strong in defense contracts, trade, and regulatory. Former senior government officials throughout.', contacts:[{name:'Miguel Zaldivar',title:'CEO & Managing Partner'},{name:'Brian Boynton',title:'Partner, Government Contracts'},{name:'Carolyn Lamm',title:'Partner, International Trade'}] },
+  { city:'dc', name:'WilmerHale', type:'Law Firm', revenue:'$1.0B', revNum:1000, tags:['ns','cyber','trade','tech','ai'], desc:'Strong national security, CFIUS, export controls, and cybersecurity regulatory practice. Home to former senior DOJ, NSC, and IC officials.', contacts:[{name:'Robert Cultice',title:'Managing Partner'},{name:'David Gartner',title:'Partner, National Security'},{name:'Ari Schwartz',title:'Managing Director, Cybersecurity'}] },
+  { city:'dc', name:'DLA Piper', type:'Law Firm', revenue:'$3.9B', revNum:3900, tags:['def','trade','tech','ai'], desc:'Largest firm globally by revenue. Robust DC government affairs, defense contracts, AI regulatory, and technology practice.', contacts:[{name:'Frank Ryan',title:'US Managing Partner'},{name:'Alejandro Mayorkas',title:'Partner, Nat\'l Security'},{name:'Ann LaFrance',title:'Partner, Technology & Data'}] },
+  { city:'dc', name:'Steptoe & Johnson', type:'Law Firm', revenue:'$450M', revNum:450, tags:['ns','cyber','trade','hs'], desc:'Known for cyber, sanctions, and national security regulatory. Strong OFAC, export controls, and government investigations practice.', contacts:[{name:'Mark Tiber',title:'Managing Partner'},{name:'Stewart Baker',title:'Partner, Cybersecurity & Nat\'l Security'},{name:'Nicholas Turner',title:'Partner, Sanctions & Export Controls'}] },
+  { city:'dc', name:'Arnold & Porter', type:'Law Firm', revenue:'$800M', revNum:800, tags:['ns','cyber','hs','trade'], desc:'Prominent DC firm with strong national security regulatory, government investigations, and cybersecurity capabilities.', contacts:[{name:'Richard Alexander',title:'Managing Partner'},{name:'Brian Finch',title:'Partner, Homeland Security & Cyber'},{name:'Mary Jean Moltenbrey',title:'Partner, Gov\'t Investigations'}] },
+  { city:'dc', name:'Wiley Rein', type:'Law Firm', revenue:'$250M', revNum:250, tags:['def','cyber','tech','trade'], desc:'Top-ranked defense procurement and government contracts firm. Known for FCC/telecom and cybersecurity practices. Boutique but elite.', contacts:[{name:'Richard Wiley',title:'Founder & Senior Counsel'},{name:'Rand Allen',title:'Partner, Government Contracts'},{name:'Megan Brown',title:'Partner, Cybersecurity & Privacy'}] },
+  { city:'dc', name:'Brownstein Hyatt Farber Schreck', type:'Law & Lobbying', revenue:'$400M', revNum:400, tags:['def','trade','tech','hs'], desc:'Top-10 lobbying firm known for bipartisan reach and defense/government contracting work. Strong appropriations relationships on both sides of the aisle.', contacts:[{name:'Marc Holtzman',title:'Chairman'},{name:'Tony Podesta',title:'Senior Advisor, Gov\'t Affairs'},{name:'Andy Allison',title:'Shareholder, Government Relations'}] },
+  { city:'dc', name:'BGR Group', type:'Lobbying', revenue:'$55M', revNum:55, tags:['ns','def','trade','hs'], desc:'Boutique powerhouse lobbying firm with deep GOP relationships. Strong in defense and homeland security. Bipartisan senior advisors throughout.', contacts:[{name:'Ed Rogers',title:'Founder & Chairman'},{name:'Lanny Griffith',title:'Co-Founder & CEO'},{name:'Elliot Berke',title:'Partner'}] },
+  { city:'dc', name:'Squire Patton Boggs', type:'Law & Lobbying', revenue:'$1.4B', revNum:1400, tags:['def','trade','tech','hs','ns'], desc:'Global firm with one of the largest government relations practices in DC. Strong trade, defense, and regulatory capabilities across all agencies.', contacts:[{name:'Mark Ruehlmann',title:'Global CEO'},{name:'Fred Upton',title:'Senior Policy Advisor'},{name:'John Engler',title:'Senior Policy Advisor'}] },
+  { city:'dc', name:'Holland & Knight', type:'Law & Lobbying', revenue:'$1.7B', revNum:1700, tags:['def','hs','trade','tech','cyber'], desc:'Major firm with a large government law group. Strong defense procurement, homeland security, and government contracts practice across agencies.', contacts:[{name:'Steve Sonberg',title:'Managing Partner'},{name:'Peter Korn',title:'Partner, Government Contracts'},{name:'Tina Won Sherman',title:'Partner, National Security'}] },
+  { city:'dc', name:'Van Scoyoc Associates', type:'Lobbying', revenue:'$45M', revNum:45, tags:['def','hs','tech'], desc:'Bipartisan firm specializing in appropriations and defense budget work. Exceptional Hill relationships on both sides of the aisle.', contacts:[{name:'H. Stewart Van Scoyoc',title:'Founder & CEO'},{name:'Theresa Silvestri',title:'Senior VP'}] },
+  { city:'dc', name:'Monument Advocacy', type:'Lobbying', revenue:'$20M', revNum:20, tags:['def','hs','tech','cyber'], desc:'Boutique bipartisan lobbying firm with defense and technology focus. Strong House and Senate Armed Services Committee relationships.', contacts:[{name:'David Lugar',title:'Founding Partner'},{name:'Jimmy Ryan',title:'Partner'}] },
+  { city:'dc', name:'Ankura Consulting Group', type:'Consulting', revenue:'$700M', revNum:700, tags:['cyber','ns','hs','tech','ai'], desc:'Expert advisory firm with strong cybersecurity, forensics, and national security regulatory practice. Growing AI risk and incident response practice.', contacts:[{name:'Kevin Lamothe',title:'President & CEO'},{name:'Shawn Henry',title:'President, Cybersecurity (ex-FBI)'}] },
+  { city:'dc', name:'K&L Gates', type:'Law Firm', revenue:'$1.2B', revNum:1200, tags:['def','cyber','trade','tech','ai'], desc:'Global firm with strong government contracts, cybersecurity, and technology regulatory practice. Growing AI policy and advisory capability.', contacts:[{name:'James Segerdahl',title:'Global Managing Partner'},{name:'Nicholas Xenakis',title:'Partner, Government Contracts'},{name:'Christy Wyatt',title:'Partner, Cybersecurity & Privacy'}] },
+  { city:'dc', name:'Paladin Capital Group', type:'Consulting / PE', revenue:'N/A', revNum:0, tags:['ns','cyber','def','hs','ai'], desc:'National security-focused PE and advisory firm. Deep connections across IC and DOD ecosystem. Portfolio spans cyber, AI, space, and dual-use tech.', contacts:[{name:'Michael Steed',title:'Founder & Managing Partner'},{name:'Alex Romero',title:'Managing Director'}] },
+  { city:'dc', name:'BGR Group / Mehlman Castagnetti', type:'Lobbying', revenue:'$30M', revNum:30, tags:['ns','def','trade','hs','tech'], desc:'Mehlman Castagnetti is a top bipartisan firm with deep relationships on Capitol Hill and across the executive branch. Significant defense and tech clients.', contacts:[{name:'Bruce Mehlman',title:'Founding Partner'},{name:'Rich Castagnetti',title:'Founding Partner'}] },
+
+  // NY
+  { city:'ny', name:'McKinsey & Company', type:'Consulting', revenue:'$16B', revNum:16000, tags:['def','ai','tech','trade','ns'], desc:'Global strategy firm with public sector and national security practice. Significant AI, technology transformation, and government advisory engagements.', contacts:[{name:'Bob Sternfels',title:'Global Managing Partner'},{name:'Liz Hilton Segel',title:'Chief Client Officer'},{name:'Michael Chertoff',title:'Senior Advisor (ex-DHS Secretary)'}] },
+  { city:'ny', name:'Boston Consulting Group (BCG)', type:'Consulting', revenue:'$12.3B', revNum:12300, tags:['def','ai','tech','trade','ns'], desc:'Expanding defense and national security practice. Known for AI, technology transformation, and government advisory. Growing public sector footprint.', contacts:[{name:'Christoph Schweizer',title:'Global CEO'},{name:'Karalee Close',title:'Partner & Public Sector Lead'},{name:'Philipp Gerbert',title:'Managing Director, Tech & AI'}] },
+  { city:'ny', name:'Skadden, Arps, Slate, Meagher & Flom', type:'Law Firm', revenue:'$2.9B', revNum:2900, tags:['trade','tech','ai','ns'], desc:'Global powerhouse with regulatory, CFIUS, sanctions, and government affairs practices. Go-to firm for high-stakes regulatory and national security M&A.', contacts:[{name:'Jeremy London',title:'Executive Partner'},{name:'Brian McCarthy',title:'Partner, CFIUS & National Security'},{name:'Ivan Schlager',title:'Partner, Cybersecurity & Privacy'}] },
+  { city:'ny', name:'Latham & Watkins', type:'Law Firm', revenue:'$5.5B', revNum:5500, tags:['trade','tech','ai','cyber','def'], desc:'Largest law firm by revenue. Strong tech, AI regulatory, cybersecurity, and government contracts capabilities. Growing national security practice.', contacts:[{name:'Richard Trobman',title:'Global Chair'},{name:'Jennifer Archie',title:'Partner, Technology Transactions'},{name:'Damon Taaffe',title:'Partner, Government Contracts'}] },
+  { city:'ny', name:'Sullivan & Cromwell', type:'Law Firm', revenue:'$2.3B', revNum:2300, tags:['trade','tech','ai','ns'], desc:'Elite Wall Street firm with strong CFIUS, sanctions, and cross-border trade regulatory practice. Preferred by Fortune 500 on national security reviews.', contacts:[{name:'Joseph Shenker',title:'Chairman'},{name:'Sergio Galvis',title:'Partner, Cross-Border & Regulatory'},{name:'Jai Massari',title:'Partner, Financial Regulatory'}] },
+  { city:'ny', name:'Paul Weiss Rifkind Wharton & Garrison', type:'Law Firm', revenue:'$2.1B', revNum:2100, tags:['ns','trade','tech','ai'], desc:'Leading government investigations and enforcement firm. Deep political connections. Strong national security, FCPA, and sanctions practice.', contacts:[{name:'Brad Karp',title:'Chairman'},{name:'Robert Mueller',title:'Senior Advisor (ex-FBI Director)'},{name:'Jeannie Rhee',title:'Partner, Investigations & Regulatory'}] },
+  { city:'ny', name:'Cleary Gottlieb Steen & Hamilton', type:'Law Firm', revenue:'$1.8B', revNum:1800, tags:['trade','ns','tech','ai'], desc:'Top-tier international trade, sanctions, CFIUS, and national security regulatory practice. Deep State Dept and Treasury alumni network.', contacts:[{name:'Michael Gerstenzang',title:'Managing Partner'},{name:'Lisa Schweitzer',title:'Partner, Trade & Restructuring'},{name:'Carmine Boccuzzi',title:'Partner, Litigation'}] },
+  { city:'ny', name:'Debevoise & Plimpton', type:'Law Firm', revenue:'$1.3B', revNum:1300, tags:['ns','cyber','trade','tech'], desc:'Strong cybersecurity, privacy, FCPA, and national security regulatory practice. Preferred counsel for financial institutions on national security compliance.', contacts:[{name:'Michael Blair',title:'Executive Partner'},{name:'Luke Dembosky',title:'Partner, Cybersecurity (ex-DOJ NSD)'},{name:'Andrew Weissmann',title:'Senior Advisor, Investigations'}] },
+  { city:'ny', name:'Gibson Dunn & Crutcher', type:'Law Firm', revenue:'$2.6B', revNum:2600, tags:['ns','trade','cyber','tech','ai'], desc:'Strong national security, sanctions, and tech regulatory practice. Growing AI advisory capabilities. Deep DOJ and White House alumni throughout.', contacts:[{name:'Barbara Becker',title:'Chair & Managing Partner'},{name:'David Laufman',title:'Partner, Nat\'l Security (ex-DOJ NSD)'},{name:'Alexander Southwell',title:'Partner, Cybersecurity'}] },
+  { city:'ny', name:'Sidley Austin', type:'Law Firm', revenue:'$2.5B', revNum:2500, tags:['trade','tech','cyber','ai','ns'], desc:'Major firm with strong national security regulatory, CFIUS, export controls, and cybersecurity practice. Growing AI policy and regulatory advisory.', contacts:[{name:'Scott Lassar',title:'Managing Partner'},{name:'Benjamin Powell',title:'Partner, Nat\'l Security (ex-WH Counsel)'},{name:'Alan Charles Raul',title:'Partner, Privacy & Cybersecurity'}] },
+  { city:'ny', name:'FTI Consulting', type:'Consulting', revenue:'$3.5B', revNum:3500, tags:['cyber','tech','trade','ai'], desc:'Economic consulting and technology firm. Strong cybersecurity, economic damages, litigation support, and regulatory advisory capabilities.', contacts:[{name:'Steven Gunby',title:'President & CEO'},{name:'Charles Maddox',title:'SVP, Cybersecurity Practice'},{name:'Christina Ramsay',title:'Managing Director, Technology'}] },
+  { city:'ny', name:'Kroll', type:'Consulting', revenue:'$2.0B', revNum:2000, tags:['cyber','ns','hs','tech'], desc:'Risk consulting leader with deep cybersecurity incident response, investigations, and national security advisory. Trusted by Fortune 100 on major breaches.', contacts:[{name:'Howard Kaplan',title:'CEO'},{name:'Dave Burg',title:'Global Cyber Risk Practice Leader'},{name:'Jason Smolanoff',title:'Senior MD, Cyber Risk (ex-FBI)'}] },
+  { city:'ny', name:'AlixPartners', type:'Consulting', revenue:'$2.0B', revNum:2000, tags:['trade','tech','ai'], desc:'High-stakes advisory firm with growing technology and trade disruption practice. Advises on supply chain, technology transformation, and regulatory risk.', contacts:[{name:'Simon Freakley',title:'CEO'},{name:'Lisa Donahue',title:'Managing Director, Technology Advisory'}] },
+  { city:'ny', name:'Teneo', type:'Consulting', revenue:'$1.0B', revNum:1000, tags:['ns','trade','tech','ai'], desc:'CEO advisory firm with strong geopolitical risk, national security, and government affairs capabilities. Trusted by global multinationals on high-stakes issues.', contacts:[{name:'Declan Kelly',title:'Co-Founder & CEO'},{name:'Alyssa Mastromonaco',title:'Partner, Strategic Communications'}] },
+  { city:'ny', name:'K2 Integrity', type:'Consulting', revenue:'$150M', revNum:150, tags:['ns','cyber','hs','trade'], desc:'Risk advisory firm with national security and financial crime focus. Senior IC, law enforcement, and regulatory alumni throughout leadership.', contacts:[{name:'Jeremy Kroll',title:'Co-Founder & CEO'},{name:'Tom Firestone',title:'Managing Director (ex-DOJ)'}] },
+  { city:'ny', name:'Morrison Foerster (MoFo)', type:'Law Firm', revenue:'$1.2B', revNum:1200, tags:['tech','cyber','ai','trade','ns'], desc:'Top technology law firm with strong cybersecurity, AI, national security regulatory, and CFIUS practice. Bridges Silicon Valley and DC effectively.', contacts:[{name:'Larren Nashelsky',title:'Chair'},{name:"Julie O'Neill",title:'Partner, National Security & CFIUS'},{name:'Mike Rubin',title:'Partner, Cybersecurity & Privacy'}] },
+  { city:'ny', name:'Willkie Farr & Gallagher', type:'Law Firm', revenue:'$900M', revNum:900, tags:['ns','trade','tech','ai'], desc:'Elite M&A and regulatory firm with strong CFIUS, sanctions, and government affairs practice. Growing technology and AI regulatory advisory.', contacts:[{name:'Gordon Caplan',title:'Co-Chair'},{name:'Jamie Gorelick',title:'Senior Advisor (ex-Deputy AG)'}] },
+  { city:'ny', name:'Promontory Financial Group (IBM)', type:'Consulting', revenue:'$600M', revNum:600, tags:['cyber','tech','ai','hs'], desc:'Regulatory and compliance consulting with cybersecurity and fintech practice. Deep network of senior government alumni in financial and cyber regulation.', contacts:[{name:'Eugene Ludwig',title:'Founder & CEO'},{name:'Bill Murden',title:'Managing Director, Cybersecurity'}] },
+  { city:'ny', name:'Covington & Burling (NY Office)', type:'Law Firm', revenue:'$1.1B', revNum:1100, tags:['trade','tech','ai','cyber'], desc:'NY office with strong tech regulatory, AI policy, and international trade practice. Key hub for cross-border national security and CFIUS work.', contacts:[{name:'Mark Gidley',title:'Partner, Antitrust & Trade'},{name:'Kurt Wimmer',title:'Partner, Technology & Media'}] },
+];
+
+let activeFilter='all', activeSort='name', activeType='all';
+const anchors=new Set(), notes={}, notesOpen=new Set();
+
+function getTypeCategory(t) {
+  if (t.includes('Law')) return 'Law Firm';
+  if (t.includes('Lobby')) return 'Lobbying';
+  return 'Consulting';
+}
+
+function renderFirms() {
+  ['dc','ny'].forEach(city => {
+    const container = document.getElementById(`${city}-firms`);
+    let firms = FIRMS.filter(f => f.city===city);
+    if (activeFilter!=='all') firms = firms.filter(f=>f.tags.includes(activeFilter));
+    if (activeType!=='all') firms = firms.filter(f=>getTypeCategory(f.type)===activeType);
+    firms.sort((a,b)=>{
+      if (activeSort==='revenue') return b.revNum-a.revNum;
+      if (activeSort==='type') return a.type.localeCompare(b.type);
+      if (activeSort==='anchor') { const d=+(anchors.has(b.name))-+(anchors.has(a.name)); return d||a.name.localeCompare(b.name); }
+      return a.name.localeCompare(b.name);
+    });
+    const ac = firms.filter(f=>anchors.has(f.name)).length;
+    document.getElementById(`${city}-count`).textContent = `${firms.length} firms`;
+    document.getElementById(`${city}-anchor-count`).textContent = ac ? `· ${ac} anchored` : '';
+    if (!firms.length) { container.innerHTML='<div class="no-results">No firms match this filter</div>'; return; }
+    container.innerHTML = firms.map(f=>{
+      const isA=anchors.has(f.name), nOpen=notesOpen.has(f.name), nVal=notes[f.name]||'';
+      const safeN = f.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      return `<div class="firm-card ${isA?'anchor':''}">
+        <div class="firm-top">
+          <div>
+            <div class="firm-name">${isA?'<span class="anchor-star">★</span>':''}${f.name}</div>
+            <div class="firm-meta">${f.type}</div>
+          </div>
+          <div><div class="firm-revenue">${f.revenue}<small>est. annual revenue</small></div></div>
+        </div>
+        <div class="firm-desc">${f.desc}</div>
+        <div style="margin-bottom:7px">
+          <div class="contacts-label">Key Contacts</div>
+          ${f.contacts.map(c=>`<div class="contact-item"><strong>${c.name}</strong> <em>— ${c.title}</em></div>`).join('')}
+        </div>
+        <div class="firm-tags">${f.tags.map(t=>`<span class="tag tag-${t}">${TAG_LABELS[t]}</span>`).join('')}</div>
+        <div class="firm-actions">
+          <button class="btn-small btn-anchor" onclick="toggleAnchor('${safeN}')">${isA?'★ Anchor':'☆ Mark Anchor'}</button>
+          <button class="btn-small" onclick="toggleNotes('${safeN}')">${nOpen?'▲ Hide Notes':'▼ '+(nVal?'View Notes':'Add Notes')}</button>
+          ${nVal&&!nOpen?'<span class="has-notes-badge">📝 notes</span>':''}
+        </div>
+        ${nOpen?`<textarea class="notes-area" placeholder="BD notes, meetings, next steps…" onchange="saveNote('${safeN}',this.value)">${nVal}</textarea>`:''}
+
+```
+  </div>`;
+}).join('');
+```
+
+});
+}
+
+function toggleAnchor(n) { anchors.has(n)?anchors.delete(n):anchors.add(n); renderFirms(); }
+function toggleNotes(n) { notesOpen.has(n)?notesOpen.delete(n):notesOpen.add(n); renderFirms(); }
+function saveNote(n,v) { notes[n]=v; }
+
+document.querySelectorAll(’.filter-btn’).forEach(btn=>btn.addEventListener(‘click’,()=>{
+document.querySelectorAll(’.filter-btn’).forEach(b=>b.classList.remove(‘active’));
+btn.classList.add(‘active’); activeFilter=btn.dataset.filter; renderFirms();
+}));
+document.getElementById(‘sortSelect’).addEventListener(‘change’,e=>{activeSort=e.target.value;renderFirms();});
+document.getElementById(‘typeSelect’).addEventListener(‘change’,e=>{activeType=e.target.value;renderFirms();});
+
+function openExport() {
+const af=FIRMS.filter(f=>anchors.has(f.name));
+if (!af.length) { alert(‘No anchors marked yet. Click “☆ Mark Anchor” on firms first.’); return; }
+const header=‘Firm,City,Type,Revenue,Practices,Key Contacts,Notes’;
+const rows=af.map(f=>{
+const n=(notes[f.name]||’’).replace(/\n/g,’ | ‘);
+return [f.name, f.city.toUpperCase(), f.type, f.revenue, f.tags.map(t=>TAG_LABELS[t]).join(’; ‘), f.contacts.map(c=>`${c.name} (${c.title})`).join(’; ‘), n].map(v=>`"${v}"`).join(’,’);
+});
+document.getElementById(‘exportContent’).textContent=[header,…rows].join(’\n’);
+document.getElementById(‘exportModal’).classList.add(‘open’);
+}
+function closeExport() { document.getElementById(‘exportModal’).classList.remove(‘open’); }
+function copyExport() { navigator.clipboard.writeText(document.getElementById(‘exportContent’).textContent).then(()=>alert(‘Copied!’)); }
+function downloadExport() {
+const blob=new Blob([document.getElementById(‘exportContent’).textContent],{type:‘text/csv’});
+const a=document.createElement(‘a’); a.href=URL.createObjectURL(blob); a.download=‘anchor_pipeline.csv’; a.click();
+}
+document.getElementById(‘exportModal’).addEventListener(‘click’,e=>{ if(e.target===document.getElementById(‘exportModal’))closeExport(); });
+
+renderFirms();
+</script>
+
+</body>
+</html>
